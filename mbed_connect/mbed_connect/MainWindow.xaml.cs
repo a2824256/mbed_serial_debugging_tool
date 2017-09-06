@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,6 +32,7 @@ namespace mbed_connect
         DispatcherTimer autoSendTick = new DispatcherTimer();//定时发送  
         private String PortName = "";
         private bool PortSwitch = false;
+        DispatcherTimer timer = new DispatcherTimer();
 
 
 
@@ -87,11 +89,30 @@ namespace mbed_connect
                 {
                     this.ComPort.PortName = this.PortName;
                     this.ComPort.BaudRate = 9600;
+                    this.ComPort.StopBits = StopBits.One;
+                    this.ComPort.Parity = Parity.None;
+
                     this.ComPort.Open();
                     this.PortSwitch = true;
                     ConnectButton.DataContext = "1";
                     ConnectButton.Content = "Disconnect";
                     ContentBox.Text = ContentBox.Text + this.PortName + "已连接...\n";
+                    try
+                    {
+                        // String content = this.ComPort.ReadLine();
+                        // ContentBox.Text = ContentBox.Text + content + "\n";
+                        // ReceiveData(ComPort);
+                        timer.Interval = new TimeSpan(0, 0, 1);
+                        //创建事件处理
+                        timer.Tick += new EventHandler(RecData);
+                        //开始计时
+                        timer.Start();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.PrintError(ex);
+                        ContentBox.Text = ContentBox.Text + "超时," + ex.Message + "\n";
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -103,6 +124,7 @@ namespace mbed_connect
             {
                 try
                 {
+                    timer.Stop();
                     this.ComPort.Close();
                     ConnectButton.DataContext = "0";
                     ConnectButton.Content = "Connect";
@@ -117,11 +139,98 @@ namespace mbed_connect
                     ContentBox.Text = ContentBox.Text + "串口关闭失败\n";
                 }
             }
-            
-           
-            
+        }
+
+        private void Button_Receive(object sender, RoutedEventArgs e)
+        {
+            if (PortSwitch)
+            {
+                try
+                {
+                    // String content = this.ComPort.ReadLine();
+                    // ContentBox.Text = ContentBox.Text + content + "\n";
+                    // ReceiveData(ComPort);
+                    timer.Interval = new TimeSpan(0, 0, 1);
+                    //创建事件处理
+                    timer.Tick += new EventHandler(RecData);
+                    //开始计时
+                    timer.Start();
+                }
+                catch (Exception ex)
+                {
+                    this.PrintError(ex);
+                    ContentBox.Text = ContentBox.Text + "超时," + ex.Message + "\n";
+                } 
+
+            }
+            else
+            {
+                ContentBox.Text = ContentBox.Text + "请打开串口\n";
+            }
+        }
+
+        private void RecData(object sender, EventArgs e)
+        {
+            try
+            {
+                String content = this.ComPort.ReadLine();
+                ContentBox.Text = ContentBox.Text + content + "\n";
+            }catch (Exception ex)
+            {
+                this.PrintError(ex);
+                timer.Stop();
+            }
 
 
+        }
+
+        private void ReceiveData(SerialPort serialPort)
+        {
+            //同步阻塞接收数据线程
+            // Thread threadReceive = new Thread(new ParameterizedThreadStart(SynReceiveData));
+            // threadReceive.Start(serialPort);
+
+            //也可用异步接收数据线程
+            Thread threadReceiveSub = new Thread(new ParameterizedThreadStart(AsyReceiveData));
+            threadReceiveSub.Start(serialPort);
+
+        }
+
+        private void SynReceiveData(object serialPortobj)
+        {
+            SerialPort serialPort = (SerialPort)serialPortobj;
+            System.Threading.Thread.Sleep(0);
+            serialPort.ReadTimeout = 1000;
+            try
+            {
+                //阻塞到读取数据或超时(这里为2秒)
+                ContentBox.Text = ContentBox.Text + this.ComPort.ReadLine(); 
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                //处理超时错误
+            }
+
+            serialPort.Close();
+
+        }
+
+        //异步读取
+        private void AsyReceiveData(object serialPortobj)
+        {
+            SerialPort serialPort = (SerialPort)serialPortobj;
+            System.Threading.Thread.Sleep(500);
+            try
+            {
+                ContentBox.Text = ContentBox.Text + this.ComPort.ReadLine();
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                //处理错误
+            }
+            serialPort.Close();
         }
 
         private void Clean_Content(object sender, RoutedEventArgs e)
