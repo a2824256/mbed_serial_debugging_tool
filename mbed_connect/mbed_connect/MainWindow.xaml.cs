@@ -27,20 +27,21 @@ namespace mbed_connect
         private string[] ports;//可用串口数组  
         private bool recStaus = true;//接收状态字  
         private bool ComPortIsOpen = false;//COM口开启状态字，在打开/关闭串口中使用，这里没有使用自带的ComPort.IsOpen，因为在串口突然丢失的时候，ComPort.IsOpen会自动false，逻辑混乱  
-        private bool Listening = false;//用于检测是否没有执行完invoke相关操作，仅在单线程收发使用，但是在公共代码区有相关设置，所以未用#define隔离  
-        private bool WaitClose = false;//invoke里判断是否正在关闭串口是否正在关闭串口，执行Application.DoEvents，并阻止再次invoke ,解决关闭串口时，程序假死，具体参见http://news.ccidnet.com/art/32859/20100524/2067861_4.html 仅在单线程收发使用，但是在公共代码区有相关设置，所以未用#define隔离  
-        DispatcherTimer autoSendTick = new DispatcherTimer();//定时发送  
+        //private bool Listening = false;//用于检测是否没有执行完invoke相关操作，仅在单线程收发使用，但是在公共代码区有相关设置，所以未用#define隔离  
+        //private bool WaitClose = false;//invoke里判断是否正在关闭串口是否正在关闭串口，执行Application.DoEvents，并阻止再次invoke ,解决关闭串口时，程序假死，具体参见http://news.ccidnet.com/art/32859/20100524/2067861_4.html 仅在单线程收发使用，但是在公共代码区有相关设置，所以未用#define隔离  
+        //DispatcherTimer autoSendTick = new DispatcherTimer();//定时发送  
         private String PortName = "";
         private bool PortSwitch = false;
         DispatcherTimer timer = new DispatcherTimer();
 
 
-
+        //创建窗口
         public MainWindow()
         {
             InitializeComponent();
         }
 
+        //下拉框选择事件
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
@@ -56,11 +57,14 @@ namespace mbed_connect
             }
         }
 
+        //点击扫描按钮触发事件
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             UpdateList();
         }
 
+
+        //更新列表
         private void UpdateList()
         {
             ports = SerialPort.GetPortNames();//获取可用串口
@@ -81,38 +85,46 @@ namespace mbed_connect
             }
         }
 
+        //连接串口
         private void Button_Connect(object sender, RoutedEventArgs e)
         {
             if (!PortSwitch)
             {
                 try
                 {
+                    //串口名称
                     this.ComPort.PortName = this.PortName;
+                    //波特率
                     this.ComPort.BaudRate = 9600;
+                    //停止位
                     this.ComPort.StopBits = StopBits.One;
                     this.ComPort.Parity = Parity.None;
-
+                    this.ComPort.ReceivedBytesThreshold = 1;
+                    //打开串口
                     this.ComPort.Open();
                     this.PortSwitch = true;
+                    this.ComPort.DataReceived += new SerialDataReceivedEventHandler(RecData);
                     ConnectButton.DataContext = "1";
+                    //修改按键名称
                     ConnectButton.Content = "Disconnect";
                     ContentBox.Text = ContentBox.Text + this.PortName + "已连接...\n";
-                    try
-                    {
-                        // String content = this.ComPort.ReadLine();
-                        // ContentBox.Text = ContentBox.Text + content + "\n";
-                        // ReceiveData(ComPort);
-                        timer.Interval = new TimeSpan(0, 0, 1);
-                        //创建事件处理
-                        timer.Tick += new EventHandler(RecData);
-                        //开始计时
-                        timer.Start();
-                    }
-                    catch (Exception ex)
-                    {
-                        this.PrintError(ex);
-                        ContentBox.Text = ContentBox.Text + "超时," + ex.Message + "\n";
-                    }
+                    //try
+                    //{
+                    //    // String content = this.ComPort.ReadLine();
+                    //    // ContentBox.Text = ContentBox.Text + content + "\n";
+                    //    // ReceiveData(ComPort);
+                    //    //SerialDataReceivedEventHandler
+                    //    //timer.Interval = new TimeSpan(0, 0, 1);
+                    //    //创建事件处理
+                    //    //timer.Tick += new EventHandler(RecData);
+                    //    //开始计时
+                    //    //timer.Start();
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    this.PrintError(ex);
+                    //    ContentBox.Text = ContentBox.Text + "超时," + ex.Message + "\n";
+                    //}
                 }
                 catch (Exception ex)
                 {
@@ -141,96 +153,20 @@ namespace mbed_connect
             }
         }
 
-        private void Button_Receive(object sender, RoutedEventArgs e)
-        {
-            if (PortSwitch)
-            {
-                try
-                {
-                    // String content = this.ComPort.ReadLine();
-                    // ContentBox.Text = ContentBox.Text + content + "\n";
-                    // ReceiveData(ComPort);
-                    timer.Interval = new TimeSpan(0, 0, 1);
-                    //创建事件处理
-                    timer.Tick += new EventHandler(RecData);
-                    //开始计时
-                    timer.Start();
-                }
-                catch (Exception ex)
-                {
-                    this.PrintError(ex);
-                    ContentBox.Text = ContentBox.Text + "超时," + ex.Message + "\n";
-                } 
-
-            }
-            else
-            {
-                ContentBox.Text = ContentBox.Text + "请打开串口\n";
-            }
-        }
-
-        private void RecData(object sender, EventArgs e)
+        //子线程执行任务
+        private void RecData(object sender, SerialDataReceivedEventArgs e)
         {
             try
             {
                 String content = this.ComPort.ReadLine();
-                ContentBox.Text = ContentBox.Text + content + "\n";
+                ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text = ContentBox.Text + content + "\n"));
             }catch (Exception ex)
             {
-                this.PrintError(ex);
-                timer.Stop();
+                ContentBox.Dispatcher.BeginInvoke(new Action(() =>ContentBox.Text = ContentBox.Text + "-----------发生异常----------\n" + ex + "\n\n"
+                + "请等待作者修复\n" + "------------------------------\n"));
             }
 
 
-        }
-
-        private void ReceiveData(SerialPort serialPort)
-        {
-            //同步阻塞接收数据线程
-            // Thread threadReceive = new Thread(new ParameterizedThreadStart(SynReceiveData));
-            // threadReceive.Start(serialPort);
-
-            //也可用异步接收数据线程
-            Thread threadReceiveSub = new Thread(new ParameterizedThreadStart(AsyReceiveData));
-            threadReceiveSub.Start(serialPort);
-
-        }
-
-        private void SynReceiveData(object serialPortobj)
-        {
-            SerialPort serialPort = (SerialPort)serialPortobj;
-            System.Threading.Thread.Sleep(0);
-            serialPort.ReadTimeout = 1000;
-            try
-            {
-                //阻塞到读取数据或超时(这里为2秒)
-                ContentBox.Text = ContentBox.Text + this.ComPort.ReadLine(); 
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-                //处理超时错误
-            }
-
-            serialPort.Close();
-
-        }
-
-        //异步读取
-        private void AsyReceiveData(object serialPortobj)
-        {
-            SerialPort serialPort = (SerialPort)serialPortobj;
-            System.Threading.Thread.Sleep(500);
-            try
-            {
-                ContentBox.Text = ContentBox.Text + this.ComPort.ReadLine();
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-                //处理错误
-            }
-            serialPort.Close();
         }
 
         private void Clean_Content(object sender, RoutedEventArgs e)
