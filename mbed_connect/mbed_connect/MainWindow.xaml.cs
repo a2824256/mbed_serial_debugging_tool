@@ -120,7 +120,6 @@ namespace mbed_connect
             {
                 try
                 {
-                    timer.Stop();
                     this.ComPort.Close();
                     ConnectButton.DataContext = "0";
                     ConnectButton.Content = "Connect";
