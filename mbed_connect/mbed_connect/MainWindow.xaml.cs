@@ -1,19 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace mbed_connect
@@ -25,14 +13,10 @@ namespace mbed_connect
     {
         SerialPort ComPort = new SerialPort();//声明一个串口        
         private string[] ports;//可用串口数组  
-        private bool recStaus = true;//接收状态字  
-        private bool ComPortIsOpen = false;//COM口开启状态字，在打开/关闭串口中使用，这里没有使用自带的ComPort.IsOpen，因为在串口突然丢失的时候，ComPort.IsOpen会自动false，逻辑混乱  
-        //private bool Listening = false;//用于检测是否没有执行完invoke相关操作，仅在单线程收发使用，但是在公共代码区有相关设置，所以未用#define隔离  
-        //private bool WaitClose = false;//invoke里判断是否正在关闭串口是否正在关闭串口，执行Application.DoEvents，并阻止再次invoke ,解决关闭串口时，程序假死，具体参见http://news.ccidnet.com/art/32859/20100524/2067861_4.html 仅在单线程收发使用，但是在公共代码区有相关设置，所以未用#define隔离  
-        //DispatcherTimer autoSendTick = new DispatcherTimer();//定时发送  
+        //private bool recStaus = true;//接收状态字
         private String PortName = "";
         private bool PortSwitch = false;
-        DispatcherTimer timer = new DispatcherTimer();
+        //DispatcherTimer timer = new DispatcherTimer();
 
 
         //创建窗口
