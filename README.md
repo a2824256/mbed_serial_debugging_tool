@@ -1,2 +1,3 @@
-# mbed_test
-A arm mbed test program
+# mbed开发板串口输出检测软件
+开发环境：VS2017 <br/>
+开发语言：C# <br/>
