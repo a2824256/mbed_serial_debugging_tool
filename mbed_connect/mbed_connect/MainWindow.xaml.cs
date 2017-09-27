@@ -176,7 +176,7 @@ namespace mbed_connect
         //检查日志文件是否存在
         private void MakeFile()
         {
-            if (File.Exists(LogFilePath))
+            if (File.Exists(LogFilePath)) 
             {
                 string FullLogFilePath = Path.GetFullPath(LogFilePath);
                 ContentBox.Text = ContentBox.Text + "日志文件:"+ FullLogFilePath + "\n";
