@@ -120,7 +120,8 @@ namespace mbed_connect
                     this.PrintError(ex);
                     ContentBox.Text = ContentBox.Text + "串口打开失败\n";
                 }
-            }else if(PortSwitch)
+            }
+            else if (PortSwitch)
             {
                 try
                 {
@@ -152,7 +153,7 @@ namespace mbed_connect
             }
             catch (Exception ex)
             {
-                ContentBox.Dispatcher.BeginInvoke(new Action(() =>ContentBox.Text = ContentBox.Text + "-----------发生异常----------\n" + ex + "\n\n"
+                ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text = ContentBox.Text + "-----------发生异常----------\n" + ex + "\n\n"
                 + "\n" + "------------------------------\n"));
             }
 
@@ -176,10 +177,10 @@ namespace mbed_connect
         //检查日志文件是否存在
         private void MakeFile()
         {
-            if (File.Exists(LogFilePath)) 
+            if (File.Exists(LogFilePath))
             {
                 string FullLogFilePath = Path.GetFullPath(LogFilePath);
-                ContentBox.Text = ContentBox.Text + "日志文件:"+ FullLogFilePath + "\n";
+                ContentBox.Text = ContentBox.Text + "日志文件:" + FullLogFilePath + "\n";
             }
             else
             {
@@ -193,6 +194,6 @@ namespace mbed_connect
             StreamWriter writer = new StreamWriter(LogFilePath);
             writer.WriteLine(content);
             writer.Close();
-        } 
+        }
     }
 }
