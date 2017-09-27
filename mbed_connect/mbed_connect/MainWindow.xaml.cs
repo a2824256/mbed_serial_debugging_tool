@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.IO.Ports;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -16,6 +18,7 @@ namespace mbed_connect
         //private bool recStaus = true;//接收状态字
         private String PortName = "";
         private bool PortSwitch = false;
+        string LogFilePath = @".\log.txt";
         //DispatcherTimer timer = new DispatcherTimer();
 
 
@@ -23,6 +26,7 @@ namespace mbed_connect
         public MainWindow()
         {
             InitializeComponent();
+            MakeFile();
         }
 
         //下拉框选择事件
@@ -143,10 +147,13 @@ namespace mbed_connect
             {
                 String content = this.ComPort.ReadLine();
                 ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text = ContentBox.Text + content + "\n"));
-            }catch (Exception ex)
+                Thread thread = new Thread(() => PrintLog(content));
+                thread.Start();
+            }
+            catch (Exception ex)
             {
                 ContentBox.Dispatcher.BeginInvoke(new Action(() =>ContentBox.Text = ContentBox.Text + "-----------发生异常----------\n" + ex + "\n\n"
-                + "请等待作者修复\n" + "------------------------------\n"));
+                + "\n" + "------------------------------\n"));
             }
 
 
@@ -160,10 +167,32 @@ namespace mbed_connect
         private void PrintError(Exception ex)
         {
             Console.WriteLine(ex);
-            ContentBox.Text = ContentBox.Text + "-----------发生异常----------\n";
-            ContentBox.Text = ContentBox.Text + ex + "\n\n";
-            ContentBox.Text = ContentBox.Text + "请等待作者修复\n";
-            ContentBox.Text = ContentBox.Text + "------------------------------\n";
+            string content = "-----------发生异常----------\n" + ex + "\n\n" + "------------------------------\n";
+            Thread thread = new Thread(() => PrintLog(content));
+            thread.Start();
+            ContentBox.Text += content;
         }
+
+        //检查日志文件是否存在
+        private void MakeFile()
+        {
+            if (File.Exists(LogFilePath))
+            {
+                string FullLogFilePath = Path.GetFullPath(LogFilePath);
+                ContentBox.Text = ContentBox.Text + "日志文件:"+ FullLogFilePath + "\n";
+            }
+            else
+            {
+                ContentBox.Text = ContentBox.Text + "日志文件-log.txt不存在\n";
+                FileStream LogFile = File.Create(LogFilePath);
+            }
+        }
+
+        private async void PrintLog(string content)
+        {
+            StreamWriter writer = new StreamWriter(LogFilePath);
+            writer.WriteLine(content);
+            writer.Close();
+        } 
     }
 }
