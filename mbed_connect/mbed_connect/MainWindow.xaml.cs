@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
+//串口库
 using System.IO.Ports;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace mbed_connect
 {
@@ -18,16 +21,49 @@ namespace mbed_connect
         //private bool recStaus = true;//接收状态字
         private String PortName = "";
         private bool PortSwitch = false;
-        string LogFilePath = @".\log.txt";
-        //DispatcherTimer timer = new DispatcherTimer();
-
+        private static string LogFilePath = @".\log.txt";
+        private static StreamWriter ErrorWriter;
+        private static string WriterInstancePath = "";
+        private static Queue queue = new Queue(13);
 
         //创建窗口
         public MainWindow()
         {
             InitializeComponent();
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            queue.Enqueue(35.0);
+            //检查日志文件
+            CreateDiagram();
             MakeFile();
         }
+
+        //public static StreamWriter GetWriterInstance(string path, bool IsWarning = true)
+        //{
+        //    if (IsWarning)
+        //    {
+        //        if(ErrorWriter == null)
+        //        {
+        //            ErrorWriter = new StreamWriter(LogFilePath);
+        //        }
+        //        return ErrorWriter;
+        //    }
+        //    else
+        //    {
+        //        if(writer == null || WriterInstancePath != path)
+        //        {
+        //            writer = new StreamWriter(path);
+        //        }
+        //        return writer;
+        //    }
+        //}
 
         //下拉框选择事件
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -91,11 +127,13 @@ namespace mbed_connect
                     //打开串口
                     this.ComPort.Open();
                     this.PortSwitch = true;
+                    //检测缓冲区输入Handler
                     this.ComPort.DataReceived += new SerialDataReceivedEventHandler(RecData);
                     ConnectButton.DataContext = "1";
                     //修改按键名称
                     ConnectButton.Content = "Disconnect";
                     ContentBox.Text = ContentBox.Text + this.PortName + "已连接...\n";
+                    ErrorWriter = new StreamWriter(LogFilePath);
                     //try
                     //{
                     //    // String content = this.ComPort.ReadLine();
@@ -118,7 +156,7 @@ namespace mbed_connect
                 {
                     this.PortSwitch = false;
                     this.PrintError(ex);
-                    ContentBox.Text = ContentBox.Text + "串口打开失败\n";
+                    ContentBox.Text += "串口打开失败\n";
                 }
             }
             else if (PortSwitch)
@@ -129,7 +167,12 @@ namespace mbed_connect
                     ConnectButton.DataContext = "0";
                     ConnectButton.Content = "Connect";
                     this.PortSwitch = false;
-                    ContentBox.Text = ContentBox.Text + "串口已断开...\n";
+                    ContentBox.Text += "串口已断开...\n";
+                    ErrorWriter.Close();
+                    if(ErrorWriter == null)
+                    {
+                        ContentBox.Text += "文件IO对象已关闭...\n";
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -137,11 +180,12 @@ namespace mbed_connect
                     ConnectButton.Content = "Connect";
                     this.PortSwitch = false;
                     ContentBox.Text = ContentBox.Text + "串口关闭失败\n";
+                    ErrorWriter.Close();
                 }
             }
         }
 
-        //子线程执行任务
+        //子线程执行接收数据任务
         private void RecData(object sender, SerialDataReceivedEventArgs e)
         {
             try
@@ -153,18 +197,37 @@ namespace mbed_connect
             }
             catch (Exception ex)
             {
-                ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text = ContentBox.Text + "-----------发生异常----------\n" + ex + "\n\n"
+                ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text += "-----------发生异常----------\n" + ex + "\n\n"
                 + "\n" + "------------------------------\n"));
             }
 
 
         }
 
+        //清空文本框
         private void Clean_Content(object sender, RoutedEventArgs e)
         {
             ContentBox.Text = "";
         }
 
+        //随机温度
+        private void RandTemp(object sender, RoutedEventArgs e)
+        {
+            Random ran = new Random();
+            //出队
+            queue.Dequeue();
+            //入队
+            queue.Enqueue(ran.Next(35,45));
+            layout.Children.RemoveRange(0, 20);
+            CreateDiagram();
+        }
+
+        //private void CreateD(object sender, RoutedEventArgs e)
+        //{
+        //    CreateDiagram();
+        //}
+
+        //输出错误
         private void PrintError(Exception ex)
         {
             Console.WriteLine(ex);
@@ -179,7 +242,7 @@ namespace mbed_connect
         {
             if (File.Exists(LogFilePath))
             {
-                string FullLogFilePath = Path.GetFullPath(LogFilePath);
+                string FullLogFilePath = System.IO.Path.GetFullPath(LogFilePath);
                 ContentBox.Text = ContentBox.Text + "日志文件:" + FullLogFilePath + "\n";
             }
             else
@@ -189,11 +252,64 @@ namespace mbed_connect
             }
         }
 
+        //打印日志
         private async void PrintLog(string content)
         {
-            StreamWriter writer = new StreamWriter(LogFilePath);
-            writer.WriteLine(content);
-            writer.Close();
+            ErrorWriter.WriteLine(content);
+            ErrorWriter.Flush();
+        }
+
+        //创建图表
+        private void CreateDiagram()
+        {
+            Random ran = new Random();
+            double x = 20;
+            //PrintValues(queue);
+            foreach(Object obj in queue)
+            {
+                DrawRectangle(Convert.ToDouble(obj), x);
+                x += 80;
+            }
+        }
+
+        //画柱子
+        private void DrawRectangle(double value,double x)
+        {
+            int DiagramHeight = 226;
+            double temp = (value-35) / 10;
+            double RecHeight = temp * 200;
+            RecHeight = RecHeight > 0 ? RecHeight : 2;
+            RecHeight = Math.Round(RecHeight);
+            Rectangle r = new Rectangle();
+            r.Fill = new SolidColorBrush(Colors.Blue);
+            r.Width = 40;
+            r.Height = RecHeight;
+            double MarginTop = 226 - RecHeight;
+            r.SetValue(Canvas.LeftProperty, x);
+            r.SetValue(Canvas.TopProperty, MarginTop);
+            layout.Children.Add(r);
+            Label label = new Label();
+            label.Content = (int)value;
+            label.Width = 40;
+            label.Foreground = new SolidColorBrush(Colors.White);
+            label.SetValue(Canvas.LeftProperty, x);
+            label.HorizontalContentAlignment = HorizontalAlignment.Center;
+            label.SetValue(Canvas.TopProperty, MarginTop-20);
+            layout.Children.Add(label);
+        }
+        
+        //清空图表
+        private void CleanDiagram()
+        {
+            layout.Children.RemoveRange(0, 26);
+        }
+
+        //打印队列
+        public static void PrintValues(IEnumerable myCollection)
+        {
+            foreach (Object obj in myCollection)
+                Console.Write("    {0}", obj);
+            Console.WriteLine();
         }
     }
 }

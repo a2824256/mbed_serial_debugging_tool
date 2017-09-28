@@ -5,14 +5,33 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:mbed_connect"
         mc:Ignorable="d"
-        Title="mbed_Test_Beta ver 1.1 -------- Author：Alex Leung" Height="350" Width="800" MaxHeight="350" MaxWidth="800">
-    <Grid Margin="11,10,10.4,4.8">
-        <ComboBox Name="Cb" IsReadOnly="True" Width="184" SelectionChanged="ComboBox_SelectionChanged" HorizontalAlignment="Left" Margin="0,3,0,276">
+        Title="mbed_Test_Beta ver 1.1 -------- Author：Alex Leung" Height="585" Width="840" MaxHeight="585" MinHeight="585" MaxWidth="840" MinWidth="840">
+    <Grid Margin="11,10,10.4,4.8" RenderTransformOrigin="0.649,0.29">
+        <ComboBox Name="Cb" IsReadOnly="True" Width="184" SelectionChanged="ComboBox_SelectionChanged" HorizontalAlignment="Left" Margin="0,3,0,504.6">
         </ComboBox>
-        <Button Margin="0,40,696.2,226" Content="Scan" Click="Button_Click"/>
-        <Button Name="ConnectButton" Margin="93,40,587.2,225" Content="Connect" Click="Button_Connect"/>
-        <Button Margin="670,5,10.2,269" Content="Clean" Click="Clean_Content"/>
-        <Label Margin="228,0,443.2,266" MaxWidth="80" MaxHeight="40" MinWidth="80" MinHeight="40" FontFamily="Microsoft Yi Baiti" FontSize="20">Output：</Label>
-        <TextBox Name="ContentBox" IsReadOnly="True" Margin="241,40,0.2,19"></TextBox>
+        <Button Margin="0,40,728.2,453.4" Content="Scan" Click="Button_Click"/>
+        <Button Name="ConnectButton" Margin="89,40,628.2,453.4" Content="Connect" Click="Button_Connect"/>
+        <Button Margin="670,5,10.2,504.6" Content="Clean" Click="Clean_Content"/>
+        <Label Margin="210,0,493.2,500.4" MaxWidth="80" MaxHeight="40" MinWidth="80" MinHeight="40" FontFamily="Microsoft Yi Baiti" FontSize="20">Output：</Label>
+        <TextBox Name="ContentBox" IsReadOnly="True" Margin="210,40,0.2,292.4"></TextBox>
+        <Label Margin="0,260,655.2,236.4" MaxWidth="120" MaxHeight="40" MinWidth="80" MinHeight="120" FontFamily="Microsoft Yi Baiti" FontSize="20" Content="Temperature："/>
+        <Canvas x:Name="layout" Margin="0,304,0.2,0.4" Background="Black">
+            <!--<Rectangle Fill="Blue" Height="95" Width="40" Canvas.Left="20" Canvas.Top="131"/>
+            <Label Canvas.Left="20" Canvas.Top="163" Width="40">100</Label>
+            <Rectangle Fill="Blue" Height="176" Width="40" Canvas.Left="80" Canvas.Top="50"/>
+            <Rectangle Fill="Blue" Height="152" Width="40" Canvas.Left="140" Canvas.Top="74"/>
+            <Rectangle Fill="Blue" Height="106" Width="40" Canvas.Left="200" Canvas.Top="120"/>
+            <Rectangle Fill="Blue" Height="164" Width="40" Canvas.Left="260" Canvas.Top="62"/>
+            <Rectangle Fill="Blue" Height="123" Width="40" Canvas.Left="320" Canvas.Top="103"/>
+            <Rectangle Fill="Blue" Height="152" Width="40" Canvas.Left="380" Canvas.Top="74"/>
+            <Rectangle Fill="Blue" Height="106" Width="40" Canvas.Left="440" Canvas.Top="120"/>
+            <Rectangle Fill="Blue" Height="176" Width="40" Canvas.Left="500" Canvas.Top="50"/>
+            <Rectangle Fill="Blue" Height="196" Width="40" Canvas.Left="560" Canvas.Top="30"/>
+            <Rectangle Fill="Blue" Height="136" Width="40" Canvas.Left="620" Canvas.Top="90"/>
+            <Rectangle Fill="Blue" Height="176" Width="40" Canvas.Left="680" Canvas.Top="50"/>
+            <Rectangle Fill="Blue" Height="152" Width="40" Canvas.Left="740" Canvas.Top="74"/>-->
+        </Canvas>
+        <Button Margin="0,92,628.2,400.4" Content="随机生成一个温度" Click="RandTemp" RenderTransformOrigin="0.51,1.544"/>
+        <!--<Button Margin="0,145,628.2,346.4" Content="新图表" Click="CreateD" RenderTransformOrigin="0.51,1.544"/>-->
     </Grid>
 </Window>
