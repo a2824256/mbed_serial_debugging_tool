@@ -24,12 +24,16 @@ namespace mbed_connect
         private static string LogFilePath = @".\log.txt";
         private static StreamWriter ErrorWriter;
         private static string WriterInstancePath = "";
-        private static Queue queue = new Queue(13);
+        private static Queue queue = new Queue(10);
+        const int DiagramHeight = 226;
+        //柱子和标签宽度
+        const int Width = 40;
 
         //创建窗口
         public MainWindow()
         {
             InitializeComponent();
+            //随便放10个数入队
             queue.Enqueue(35.0);
             queue.Enqueue(35.0);
             queue.Enqueue(35.0);
@@ -45,34 +49,13 @@ namespace mbed_connect
             MakeFile();
         }
 
-        //public static StreamWriter GetWriterInstance(string path, bool IsWarning = true)
-        //{
-        //    if (IsWarning)
-        //    {
-        //        if(ErrorWriter == null)
-        //        {
-        //            ErrorWriter = new StreamWriter(LogFilePath);
-        //        }
-        //        return ErrorWriter;
-        //    }
-        //    else
-        //    {
-        //        if(writer == null || WriterInstancePath != path)
-        //        {
-        //            writer = new StreamWriter(path);
-        //        }
-        //        return writer;
-        //    }
-        //}
-
         //下拉框选择事件
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
             {
                 this.PortName = Cb.SelectedValue.ToString();
-                ContentBox.Text = ContentBox.Text + "已自动选择" + this.PortName + "...\n";
-                ContentBox.Text = ContentBox.Text + "Waiting connect...\n";
+                ContentBox.Text += "已自动选择" + this.PortName + "...\nWaiting connect...\n";
             }
             catch (Exception ex)
             {
@@ -94,7 +77,7 @@ namespace mbed_connect
             ports = SerialPort.GetPortNames();//获取可用串口
             if (ports.Length > 0)//ports.Length > 0说明有串口可用  
             {
-                ContentBox.Text = ContentBox.Text + "有可用串口" + ports.Length + "个...\n";
+                ContentBox.Text += "有可用串口" + ports.Length + "个...\n";
                 for (int i = 0; i < ports.Length; i++)
                 {
                     Cb.Items.Add(ports[i]);
@@ -105,7 +88,7 @@ namespace mbed_connect
             {
                 Cb.Items.Clear();
                 this.PortName = "";
-                ContentBox.Text = ContentBox.Text + "无可用串口...\n";
+                ContentBox.Text +=  "无可用串口...\n";
             }
         }
 
@@ -134,23 +117,6 @@ namespace mbed_connect
                     ConnectButton.Content = "Disconnect";
                     ContentBox.Text = ContentBox.Text + this.PortName + "已连接...\n";
                     ErrorWriter = new StreamWriter(LogFilePath);
-                    //try
-                    //{
-                    //    // String content = this.ComPort.ReadLine();
-                    //    // ContentBox.Text = ContentBox.Text + content + "\n";
-                    //    // ReceiveData(ComPort);
-                    //    //SerialDataReceivedEventHandler
-                    //    //timer.Interval = new TimeSpan(0, 0, 1);
-                    //    //创建事件处理
-                    //    //timer.Tick += new EventHandler(RecData);
-                    //    //开始计时
-                    //    //timer.Start();
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //    this.PrintError(ex);
-                    //    ContentBox.Text = ContentBox.Text + "超时," + ex.Message + "\n";
-                    //}
                 }
                 catch (Exception ex)
                 {
@@ -179,7 +145,7 @@ namespace mbed_connect
                     this.PrintError(ex);
                     ConnectButton.Content = "Connect";
                     this.PortSwitch = false;
-                    ContentBox.Text = ContentBox.Text + "串口关闭失败\n";
+                    ContentBox.Text += "串口关闭失败\n";
                     ErrorWriter.Close();
                 }
             }
@@ -243,11 +209,11 @@ namespace mbed_connect
             if (File.Exists(LogFilePath))
             {
                 string FullLogFilePath = System.IO.Path.GetFullPath(LogFilePath);
-                ContentBox.Text = ContentBox.Text + "日志文件:" + FullLogFilePath + "\n";
+                ContentBox.Text += "日志文件:" + FullLogFilePath + "\n";
             }
             else
             {
-                ContentBox.Text = ContentBox.Text + "日志文件-log.txt不存在\n";
+                ContentBox.Text += "日志文件-log.txt不存在\n";
                 FileStream LogFile = File.Create(LogFilePath);
             }
         }
@@ -258,16 +224,18 @@ namespace mbed_connect
             ErrorWriter.WriteLine(content);
             ErrorWriter.Flush();
         }
-
+ 
         //创建图表
         private void CreateDiagram()
         {
             Random ran = new Random();
+            //与起点相差距离
             double x = 20;
             //PrintValues(queue);
             foreach(Object obj in queue)
             {
                 DrawRectangle(Convert.ToDouble(obj), x);
+                //柱子间间距
                 x += 80;
             }
         }
@@ -275,24 +243,24 @@ namespace mbed_connect
         //画柱子
         private void DrawRectangle(double value,double x)
         {
-            int DiagramHeight = 226;
             double temp = (value-35) / 10;
             double RecHeight = temp * 200;
             RecHeight = RecHeight > 0 ? RecHeight : 2;
             RecHeight = Math.Round(RecHeight);
             Rectangle r = new Rectangle();
             r.Fill = new SolidColorBrush(Colors.Blue);
-            r.Width = 40;
+            r.Width = Width;
             r.Height = RecHeight;
-            double MarginTop = 226 - RecHeight;
+            double MarginTop = DiagramHeight - RecHeight;
             r.SetValue(Canvas.LeftProperty, x);
             r.SetValue(Canvas.TopProperty, MarginTop);
             layout.Children.Add(r);
             Label label = new Label();
             label.Content = (int)value;
-            label.Width = 40;
+            label.Width = Width;
             label.Foreground = new SolidColorBrush(Colors.White);
             label.SetValue(Canvas.LeftProperty, x);
+            //文字居中
             label.HorizontalContentAlignment = HorizontalAlignment.Center;
             label.SetValue(Canvas.TopProperty, MarginTop-20);
             layout.Children.Add(label);
@@ -301,7 +269,7 @@ namespace mbed_connect
         //清空图表
         private void CleanDiagram()
         {
-            layout.Children.RemoveRange(0, 26);
+            layout.Children.RemoveRange(0, 20);
         }
 
         //打印队列
