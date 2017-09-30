@@ -11,7 +11,7 @@ using System.Windows.Shapes;
 
 namespace mbed_connect
 {
-    /// <summary>
+    /// <summary> 
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
     public partial class MainWindow : Window
