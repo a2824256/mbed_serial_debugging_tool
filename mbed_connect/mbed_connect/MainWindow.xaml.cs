@@ -23,7 +23,8 @@ namespace mbed_connect
         private bool PortSwitch = false;
         private static string LogFilePath = @".\log.txt";
         private static StreamWriter ErrorWriter;
-        private static string WriterInstancePath = "";
+        private static string WriterInstancePath;
+        //长度为10队列
         private static Queue queue = new Queue(10);
         const int DiagramHeight = 226;
         //柱子和标签宽度
@@ -157,7 +158,18 @@ namespace mbed_connect
             try
             {
                 String content = this.ComPort.ReadLine();
-                ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text = ContentBox.Text + content + "\n"));
+                ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text += content + "\n"));
+                ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.ScrollToEnd()));
+                //预防输入数据不是纯数字
+                try
+                {
+                    //将内容转化为Int32类型
+                    layout.Dispatcher.BeginInvoke(new Action(() => RandTemp(Convert.ToInt32(content))));
+                }catch(Exception ex)
+                {
+                    ContentBox.Dispatcher.BeginInvoke(new Action(() => ContentBox.Text += "-----------发生异常----------\n" + ex + "\n\n"
+                + "\n" + "------------------------------\n"));
+                }
                 Thread thread = new Thread(() => PrintLog(content));
                 thread.Start();
             }
@@ -176,22 +188,35 @@ namespace mbed_connect
             ContentBox.Text = "";
         }
 
-        //随机温度
-        private void RandTemp(object sender, RoutedEventArgs e)
+        //随机温度按钮响应事件
+        private void RandTempButton(object sender, RoutedEventArgs e)
+        {
+            RandTemp();
+        }
+
+        //生成随机温度
+        private void RandTemp()
         {
             Random ran = new Random();
             //出队
             queue.Dequeue();
             //入队
-            queue.Enqueue(ran.Next(35,45));
-            layout.Children.RemoveRange(0, 20);
+            queue.Enqueue(ran.Next(35, 45));
+            CleanDiagram();
             CreateDiagram();
         }
 
-        //private void CreateD(object sender, RoutedEventArgs e)
-        //{
-        //    CreateDiagram();
-        //}
+        //生成随机温度
+        private void RandTemp(int temp)
+        {
+            Random ran = new Random();
+            //出队
+            queue.Dequeue();
+            //入队
+            queue.Enqueue(temp);
+            CleanDiagram();
+            CreateDiagram();
+        }
 
         //输出错误
         private void PrintError(Exception ex)
@@ -219,7 +244,7 @@ namespace mbed_connect
         }
 
         //打印日志
-        private async void PrintLog(string content)
+        private void PrintLog(string content)
         {
             ErrorWriter.WriteLine(content);
             ErrorWriter.Flush();
@@ -243,14 +268,20 @@ namespace mbed_connect
         //画柱子
         private void DrawRectangle(double value,double x)
         {
+            //预防连读导致柱子突破天际
+            value = value > 45 ? 45 : value;
+            //35度以下不要
             double temp = (value-35) / 10;
+            //按比例取得柱状图高度
             double RecHeight = temp * 200;
             RecHeight = RecHeight > 0 ? RecHeight : 2;
+            //取整
             RecHeight = Math.Round(RecHeight);
             Rectangle r = new Rectangle();
             r.Fill = new SolidColorBrush(Colors.Blue);
             r.Width = Width;
             r.Height = RecHeight;
+            //顶部距离
             double MarginTop = DiagramHeight - RecHeight;
             r.SetValue(Canvas.LeftProperty, x);
             r.SetValue(Canvas.TopProperty, MarginTop);
